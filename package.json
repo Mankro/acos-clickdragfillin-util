@@ -1,0 +1,16 @@
+{
+  "name": "clickdragfillin-util",
+  "version": "0.0.1",
+  "dependencies": {
+    "recursive-readdir": "^2.1.1",
+    "underscore": "~1.8.3",
+    "xml2js": "~0.4.17"
+  },
+  "description": "Utility functions for point-and-click, drag-and-drop, and text fill-in exercises",
+  "main": "index.coffee",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Markku Riekkinen",
+  "license": "MIT"
+}
