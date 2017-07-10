@@ -115,11 +115,7 @@ class Exercise
   # tree: an ExerciseNode, root of the tree
   # head: a ExerciseHtmlNode with nodeType='head', contains stylesheets and javascript to include
   # xml: A String containing XML markup
-  # contentType: type of the exercise, either "pointandclick" or "draganddrop"
-  # static class method (starts with @)
-  @parseXml: (xml, contentType, callback) ->
-    # initialize this class
-    exercise = new @ contentType
+  parseXml: (xml, callback) ->
     # Initialize XML parser
     parser = new xml2js.Parser(
         normalizeTags: true
@@ -129,14 +125,16 @@ class Exercise
       )
     
     # Parse string into an XML DOM
-    parser.parseString xml, (err, dom) ->
+    parser.parseString xml, (err, dom) =>
       if err
         callback(err)
       else 
-        exercise._parseDom(dom, callback)
+        @_parseDom(dom, callback)
 
 
+  # contentType: type of the exercise, either "pointandclick" or "draganddrop"
   constructor: (@contentType) ->
+
 
   # Parses the XML DOM into a tree of Exercise Nodes
   # Calls callback(error, tree, head) with the resulting ExerciseNode tree
@@ -229,7 +227,6 @@ class Exercise
       else if @contentType == 'draganddrop'
         droppableNode = new ExerciseDroppableNode(text, id)
         nodes.push droppableNode
-        #TODO where could draggables be added? at the end when HTML is ready and JSON can be added?
       else
         throw new TypeError "Exercise.contentType has an unsupported value: #{@contentType}"
       
@@ -254,6 +251,8 @@ class Exercise
     else if nodeName == 'fillin'
       exerciseNode = new ExerciseFillinNode(xmlNode['_'], manualId || idCounter())
 
+    # no XML notation implemented for drag-and-drop
+
     # Parse attributes
 
     # Parse <feedback> child nodes
@@ -277,8 +276,14 @@ class Exercise
   # The result is something like {'id1': {payload...}, 'id2': {payload...}}
   # hash: existing payload on which to build
   # tree: the root ExerciseNode
-  @jsonPayload: (hash, tree) ->
+  jsonPayload: (hash, tree) ->
   
+    if @contentType == 'draganddrop'
+      # no operation for drag-and-drop exercises:
+      # the JSON payload does not have the droppable IDs in the top level as they are nested deeper
+      # and the XML notation for defining payload (feedback, correct, etc.) has not been implemented
+      return hash
+    
     # Collect payload recursively
     dfs = (node) ->
       payload = hash[node.id]
