@@ -101,10 +101,11 @@ class ExerciseDraggableNode extends ExerciseNode
 
 class ExerciseDroppableNode extends ExerciseNode
   constructor: (@text, @id) ->
-    @text = '___' if !@text? || @text.length < 1
+    @text = '&nbsp;&nbsp;&nbsp;&nbsp;' if !@text? || @text.length < 1
 
   html: ->
-    "<span data-label=\"#{@id}\" class=\"droppable\">#{@text}</span>"
+    "<span data-label=\"#{@id}\" class=\"droppable\"><span>#{@text}</span></span>"
+    # extra nested <span> is needed for hacking around the HTML5 drag-and-drop API
 
 
 class Exercise
