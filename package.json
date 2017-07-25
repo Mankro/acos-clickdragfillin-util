@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@version.aalto.fi:riekkim1/acos-clickdragfillin-util.git",
+    "url": "git@version.aalto.fi:riekkim1/acos-clickdragfillin-util.git"
   },
   "author": "Markku Riekkinen",
   "license": "MIT"
