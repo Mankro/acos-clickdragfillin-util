@@ -194,11 +194,16 @@ writeExerciseLogEvent = (logDirectory, contentTypePrototype, payload, req, proto
 #   This function reads submission data (JSON) from the feedback property and
 #   then overwrites the feedback property with the HTML feedback.
 # req: req parameter from the handleEvent method of the content type
+# payloadTransformerCallback: callback function that is given the payload object
+#   and the server base address as argument. The function may modify the payload for
+#   the final feedback, e.g., remove some unused properties and convert relative URLs to absolute.
+#   The property answers from the eventPayload has been added to the payload
+#   before calling the callback.
 # cb: callback function that is called at the end. No arguments are supplied to
 #   the function call, hence handleEvent should wrap its own callback since
 #   it requires arguments.
 buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress,
-    njEnv, exerciseCache, eventPayload, req, cb) ->
+    njEnv, exerciseCache, eventPayload, req, payloadTransformerCallback, cb) ->
   
   readCallback = () ->
     cache = exerciseCache[req.params.contentPackage][req.params.name]
@@ -215,15 +220,9 @@ buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress
     # convert relative URLs to absolute in the exercise XML
     exerciseHtml = convertRelativeUrlsInHtml cache.exercise, serverAddress
     
-    # convert relative URLs to absolute in feedback strings
-    for own label, data of payload.draggables
-      delete data.reuse
-      convertRelativeUrlsInHtmlStrings(data.feedback, serverAddress) if data.feedback?
-    for own label, data of payload.droppables
-      convertRelativeUrlsInHtmlStrings(data.feedback, serverAddress) if data.feedback?
-    if payload.combinedfeedback?
-      for comboObj in payload.combinedfeedback
-        comboObj.feedback = convertRelativeUrlsInHtml comboObj.feedback, serverAddress
+    # call the callback from the content type to modify the payload
+    # (different content types may use different structures in the JSON payload)
+    payloadTransformerCallback payload, serverAddress
     
     
     fs.readFile path.join(contentTypeDir, 'static', 'feedback.css'), 'utf8', (err, cssData) ->
@@ -304,4 +303,5 @@ module.exports =
   buildFinalFeedback: buildFinalFeedback
   convertUrlToAbsoluteUrl: convertUrlToAbsoluteUrl
   convertRelativeUrlsInHtml: convertRelativeUrlsInHtml
+  convertRelativeUrlsInHtmlStrings: convertRelativeUrlsInHtmlStrings
 
