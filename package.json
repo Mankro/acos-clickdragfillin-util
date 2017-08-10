@@ -1,6 +1,6 @@
 {
   "name": "clickdragfillin-util",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "recursive-readdir": "^2.1.1",
