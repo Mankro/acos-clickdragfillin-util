@@ -212,7 +212,10 @@ buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress
     # do not add the answers property to the object in the cache
     payload = JSON.parse(JSON.stringify(cache.payload))
     
-    payload.answers = eventPayload.feedback.answers
+    if eventPayload.feedback.answers?
+      payload.answers = eventPayload.feedback.answers
+    else
+      payload.answers = {}
     
     # remove trailing slash /
     serverAddress = serverAddress.substr(0, serverAddress.length - 1) if serverAddress[serverAddress.length - 1] == '/'
