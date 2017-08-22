@@ -101,7 +101,8 @@ class ExerciseDraggableNode extends ExerciseNode
 
 class ExerciseDroppableNode extends ExerciseNode
   constructor: (@text, @id) ->
-    @text = '&nbsp;&nbsp;&nbsp;&nbsp;' if !@text? || @text.length < 1
+    @text = @text.trim()
+    @text = '&nbsp;&nbsp;&nbsp;&nbsp;' if @text.length < 1
 
   html: ->
     "<span data-label=\"#{@id}\" class=\"droppable\"><span>#{@text}</span></span>"
