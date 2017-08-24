@@ -1,0 +1,14 @@
+<iframe id="acos-feedback-iframe" height="600" width="700" src="about:blank">
+</iframe>
+<script src="{{ serverUrl|safe }}/static/clickdragfillin-util/resize-feedback-iframe.js" type="text/javascript"></script>
+<script type="text/javascript">
+(function(document) {
+  "use strict";
+  /* write the contents of the iframe */
+  var doc = document.getElementById('acos-feedback-iframe').contentWindow.document;
+  var content = "{{ iframeContent|safe }}";
+  doc.open();
+  doc.write(content);
+  doc.close();
+}(document));
+</script>

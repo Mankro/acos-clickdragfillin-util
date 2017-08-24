@@ -1,8 +1,9 @@
 {
-  "name": "clickdragfillin-util",
+  "name": "acos-clickdragfillin-util",
   "version": "0.1.0",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
+    "nunjucks": "^3.0.1",
     "recursive-readdir": "^2.1.1",
     "underscore": "~1.8.3",
     "xml2js": "~0.4.17"

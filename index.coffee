@@ -5,14 +5,21 @@ fs = require('fs')
 path = require('path')
 recursiveReaddir = require('recursive-readdir')
 cheerio = require('cheerio')
+nunjucks = require('nunjucks')
 Exercise = require('./exercise')
+
+# nunjucks views (templates)
+utilNjEnv = nunjucks.configure(path.join(__dirname, 'views'))
 
 # name of the directory in the content package that contains the exercises (XML files)
 exercisesDirName = 'exercises'
 
+# export object
+Util = () ->
+
 
 # Adds a content package (at ACOS server startup)
-registerContentPackage = (contentPackagePrototype, contentPackageDir) ->
+Util.registerContentPackage = (contentPackagePrototype, contentPackageDir) ->
   # Autodiscover exercises: any XML file in the content package directory "exercises"
   # is assumed to be an exercise (with a corresponding JSON file). The files may be nested
   # in subdirectories.
@@ -66,7 +73,7 @@ registerContentPackage = (contentPackagePrototype, contentPackageDir) ->
 # errorCallback: function that is called when reading or parsing the files fail
 #   (called with one argument, the error object)
 # callback: function that is called after successfully parsing the exercise
-readExerciseXML = (exerciseName, contentType, contentPackage, cache, errorCallback, callback) ->
+Util.readExerciseXML = (exerciseName, contentType, contentPackage, cache, errorCallback, callback) ->
   filepath = exerciseName.replace(/-/g, path.sep) # replace - with /
   fs.readFile path.join(contentPackage.getDir(), exercisesDirName, filepath + '.xml'), 'utf8', (err, xml_data) ->
     if err
@@ -107,7 +114,7 @@ readExerciseXML = (exerciseName, contentType, contentPackage, cache, errorCallba
 #   of the content type (exercise_head.html and exercise_body.html)
 # exerciseCache: exercise cache object of the content type
 # req, params, handlers, cb: the same as in the initialize function of content types
-initializeContentType = (contentTypePrototype, njEnv, exerciseCache, req, params, handlers, cb) ->
+Util.initializeContentType = (contentTypePrototype, njEnv, exerciseCache, req, params, handlers, cb) ->
   contentPackage = handlers.contentPackages[req.params.contentPackage]
   
   readExerciseCallback = () ->
@@ -130,7 +137,7 @@ initializeContentType = (contentTypePrototype, njEnv, exerciseCache, req, params
 
 
   readExerciseErrorCallback = (err) ->
-    params.bodyContent = renderError err
+    params.bodyContent = Util.renderError err
     cb()
 
 
@@ -139,7 +146,7 @@ initializeContentType = (contentTypePrototype, njEnv, exerciseCache, req, params
   if !exerciseCache[req.params.contentPackage][params.name]?
     # not cached yet
     exerciseCache[req.params.contentPackage][params.name] = {}
-    readExerciseXML(params['name'], contentTypePrototype, contentPackage,
+    Util.readExerciseXML(params['name'], contentTypePrototype, contentPackage,
         exerciseCache[req.params.contentPackage][params.name],
         readExerciseErrorCallback, readExerciseCallback)
   else
@@ -155,7 +162,7 @@ initializeContentType = (contentTypePrototype, njEnv, exerciseCache, req, params
       readExerciseCallback()
 
 
-renderError = (error) ->
+Util.renderError = (error) ->
   "<div class=\"alert-danger\">\n" + error.toString() + "\n</div>"
 
 
@@ -163,7 +170,7 @@ renderError = (error) ->
 # logDirectory: path to the log directory of the ACOS server
 # contentTypePrototype: content type object
 # payload, req, protocolPayload: the same as in the handleEvent function of content types
-writeExerciseLogEvent = (logDirectory, contentTypePrototype, payload, req, protocolPayload) ->
+Util.writeExerciseLogEvent = (logDirectory, contentTypePrototype, payload, req, protocolPayload) ->
   dir = logDirectory + "/#{ contentTypePrototype.namespace }/" + req.params.contentPackage
   # path like log_dir/"contenttype"/"contentpackage", log files for each exercise will be created there
   
@@ -202,7 +209,7 @@ writeExerciseLogEvent = (logDirectory, contentTypePrototype, payload, req, proto
 # cb: callback function that is called at the end. No arguments are supplied to
 #   the function call, hence handleEvent should wrap its own callback since
 #   it requires arguments.
-buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress,
+Util.buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress,
     njEnv, exerciseCache, eventPayload, req, payloadTransformerCallback, cb) ->
   
   readCallback = () ->
@@ -220,32 +227,33 @@ buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress
     # remove trailing slash /
     serverAddress = serverAddress.substr(0, serverAddress.length - 1) if serverAddress[serverAddress.length - 1] == '/'
     
-    # convert relative URLs to absolute in the exercise XML
-    exerciseHtml = convertRelativeUrlsInHtml cache.exercise, serverAddress
-    
     # call the callback from the content type to modify the payload
     # (different content types may use different structures in the JSON payload)
     payloadTransformerCallback payload, serverAddress
     
-    
-    fs.readFile path.join(contentTypeDir, 'static', 'feedback.css'), 'utf8', (err, cssData) ->
-      if (err)
-        cssData = null
-    
-      # overwrite the submission data with the real feedback HTML
-      eventPayload.feedback = njEnv.render 'feedback.html', {
-        exercise: exerciseHtml
-        payload: JSON.stringify payload
-        score: eventPayload.points
-        correctAnswers: eventPayload.feedback.correctAnswers
-        incorrectAnswers: eventPayload.feedback.incorrectAnswers
-        cssStyle: cssData
-        serverUrl: serverAddress
-      }
-      cb()
+    iframeContent = njEnv.render 'feedback.html', {
+      exercise: cache.exercise
+      payload: JSON.stringify payload
+      headContent: cache.head
+      score: eventPayload.points
+      correctAnswers: eventPayload.feedback.correctAnswers
+      incorrectAnswers: eventPayload.feedback.incorrectAnswers
+      serverUrl: serverAddress
+    }
+    # encode special characters <, >, ", ', \, &, and line terminators to unicode literals (\uXXXX)
+    # so that the feedback HTML document can be written to a JS string literal
+    # inside a <script> element without breaking the browser HTML parsers
+    iframeContent = encodeSpecialCharsToUnicode iframeContent
+    # overwrite the submission data with the real feedback HTML
+    # the feedback is embedded in an <iframe>
+    eventPayload.feedback = utilNjEnv.render 'feedback-iframe.html', {
+      iframeContent: iframeContent
+      serverUrl: serverAddress
+    }
+    cb()
   
   readErrorCallback = (err) ->
-    eventPayload.feedback = renderError err
+    eventPayload.feedback = Util.renderError err
     cb()
   
   
@@ -254,7 +262,7 @@ buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress
   if !exerciseCache[req.params.contentPackage][req.params.name]?
     # not cached yet
     exerciseCache[req.params.contentPackage][req.params.name] = {}
-    readExerciseXML(req.params.name, contentType, contentPackage,
+    Util.readExerciseXML(req.params.name, contentType, contentPackage,
         exerciseCache[req.params.contentPackage][req.params.name],
         readErrorCallback, readCallback)
   else
@@ -262,12 +270,29 @@ buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAddress
     readCallback()
 
 
-convertRelativeUrlsInHtmlStrings = (obj, serverAddress) ->
+# encode special characters <, >, ", ', \, &, and line terminators to unicode literals (\uXXXX)
+encodeSpecialCharsToUnicode = (str) ->
+  str.replace /[\\<>"'&\n\r\u2028\u2029]/g, (char) ->
+    switch char
+      when '\\' then '\\u005c'
+      when '<' then '\\u003c'
+      when '>' then '\\u003e'
+      when '"' then '\\u0022'
+      when "'" then '\\u0027'
+      when '&' then '\\u0026'
+      when '\n' then '\\n'
+      when '\r' then '\\r'
+      when '\u2028' then '\\u2028'
+      when '\u2029' then '\\u2029'
+      else char
+
+
+Util.convertRelativeUrlsInHtmlStrings = (obj, serverAddress) ->
   for own key, str of obj
     obj[key] = convertRelativeUrlsInHtml str, serverAddress
 
 
-convertRelativeUrlsInHtml = (htmlStr, serverAddress) ->
+Util.convertRelativeUrlsInHtml = (htmlStr, serverAddress) ->
   # convert relative URLs in the HTML string, e.g., in src attributes of <img> elements
   # the URLs are made absolute using serverAddress as the target
   $ = cheerio.load htmlStr
@@ -287,7 +312,7 @@ convertRelativeUrlsInHtml = (htmlStr, serverAddress) ->
   $('body').html()
 
 
-convertUrlToAbsoluteUrl = (url, serverAddress) ->
+Util.convertUrlToAbsoluteUrl = (url, serverAddress) ->
   absoluteRegExp = /^(#|\/\/|\w+:)/
   if not absoluteRegExp.test url # if not absolute URL
     # assume that url is a root-relative URL (starts with "/" like "/static/...")
@@ -296,15 +321,28 @@ convertUrlToAbsoluteUrl = (url, serverAddress) ->
     url
 
 
-module.exports =
-  Exercise: Exercise
-  readExerciseXML: readExerciseXML
-  registerContentPackage: registerContentPackage
-  initializeContentType: initializeContentType
-  renderError: renderError
-  writeExerciseLogEvent: writeExerciseLogEvent
-  buildFinalFeedback: buildFinalFeedback
-  convertUrlToAbsoluteUrl: convertUrlToAbsoluteUrl
-  convertRelativeUrlsInHtml: convertRelativeUrlsInHtml
-  convertRelativeUrlsInHtmlStrings: convertRelativeUrlsInHtmlStrings
+###########################
+## ACOS server interface ##
+###########################
+#Util.initialize = (req, params, handlers, cb) ->
+# this is a library that provides utilities to other modules,
+# hence this does not render any content of its own
+#  cb()
+
+Util.register = (handlers, app, conf) ->
+  handlers.libraries['clickdragfillin-util'] = Util
+
+Util.namespace = 'clickdragfillin-util'
+Util.packageType = 'library'
+Util.meta =
+  'name': 'clickdragfillin-util'
+  'shortDescription': 'Utility functions for point-and-click, drag-and-drop, and text fill-in exercises'
+  'description': 'Utility functions for point-and-click, drag-and-drop, and text fill-in exercises'
+  'author': 'Markku Riekkinen'
+  'license': 'MIT'
+  'version': '0.1.0'
+  'url': ''
+
+Util.Exercise = Exercise
+module.exports = Util
 
