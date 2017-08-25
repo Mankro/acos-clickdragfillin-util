@@ -227,6 +227,8 @@ Util.buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAd
     # remove trailing slash /
     serverAddress = serverAddress.substr(0, serverAddress.length - 1) if serverAddress[serverAddress.length - 1] == '/'
     
+    finalComment = Util.getFinalComment eventPayload.points, payload.finalcomment
+    
     # call the callback from the content type to modify the payload
     # (different content types may use different structures in the JSON payload)
     payloadTransformerCallback payload, serverAddress
@@ -239,6 +241,7 @@ Util.buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAd
       correctAnswers: eventPayload.feedback.correctAnswers
       incorrectAnswers: eventPayload.feedback.incorrectAnswers
       serverUrl: serverAddress
+      finalComment: finalComment
     }
     # encode special characters <, >, ", ', \, &, and line terminators to unicode literals (\uXXXX)
     # so that the feedback HTML document can be written to a JS string literal
@@ -285,6 +288,38 @@ encodeSpecialCharsToUnicode = (str) ->
       when '\u2028' then '\\u2028'
       when '\u2029' then '\\u2029'
       else char
+
+
+# Return the final comment HTML string for the given score (0-100) and
+# the comment payload (object that may have keys "common" and the score limits).
+# The lowest score limit is activated of the limits that the score is less than or equal to.
+Util.getFinalComment = (score, payload) ->
+  if !payload?
+    return ''
+  html = ''
+  if payload.common
+    # always show this comment
+    html += payload.common + '<br>'
+  
+  limits = []
+  # convert limits to numbers so that they may be compared
+  for own key, val of payload
+    limit = parseInt(key, 10)
+    if not isNaN(limit)
+      limits.push([limit, key])
+  
+  limits.sort (a, b) ->
+    if a[0] < b[0] then -1
+    else if a[0] > b[0] then 1
+    else 0
+  
+  feedbackIdx = limits.findIndex (elem) ->
+    score <= elem[0]
+  
+  if feedbackIdx != -1
+    html += payload[limits[feedbackIdx][1]]
+  
+  html
 
 
 Util.convertRelativeUrlsInHtmlStrings = (obj, serverAddress) ->
