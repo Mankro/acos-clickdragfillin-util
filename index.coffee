@@ -375,7 +375,7 @@ Util.meta =
   'description': 'Utility functions for point-and-click, drag-and-drop, and text fill-in exercises'
   'author': 'Markku Riekkinen'
   'license': 'MIT'
-  'version': '0.1.0'
+  'version': '0.3.0'
   'url': ''
 
 Util.Exercise = Exercise
