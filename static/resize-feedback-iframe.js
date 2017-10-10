@@ -1,25 +1,19 @@
-document.addEventListener("DOMContentLoaded", function() {
+;(function(document, window, undefined) {
+// This script resizes final feedback iframes when the window is resized so that the iframes
+// may use most of the available height of the browser viewport.
+// The iframes have style "width 100%" so that the width scales automatically and
+// only the height needs to be set separately.
   "use strict";
   
-  var acosResizeIframe = function(iframe, wrapper) {
-    var newWidth = Math.max(wrapper.offsetWidth, 700);
-    var newHeight = Math.max(window.innerHeight * 0.8, 600); // 80% of viewport height
-    iframe.style.width = newWidth + 'px';
-    iframe.style.height = newHeight + 'px';
+  var acosResizeFeedbackIframes = function() {
+    var iframes = document.getElementsByClassName('acos-feedback-iframe');
+    var len = iframes.length;
+    var newHeight = Math.max(window.innerHeight * 0.8, 500).toString(); // 80% of viewport height
+    for (var i = 0; i < len; ++i) {
+      iframes[i].setAttribute('height', newHeight);
+    }
   };
   
-  var iframe = document.getElementById('acos-feedback-iframe');
-  if (!iframe)
-    return;
-  var parent = iframe.parentElement;
-  if (!parent) {
-    parent = document.getElementById('exercise') || document.getElementById('feedback');
-    if (!parent)
-      return;
-  }
-  
-  acosResizeIframe(iframe, parent);
-  window.addEventListener('resize', function() {
-    acosResizeIframe(iframe, parent);
-  }, true);
-});
+  acosResizeFeedbackIframes();
+  window.addEventListener('resize', acosResizeFeedbackIframes, false);
+})(document, window);

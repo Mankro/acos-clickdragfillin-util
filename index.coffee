@@ -252,6 +252,7 @@ Util.buildFinalFeedback = (contentType, contentPackage, contentTypeDir, serverAd
     eventPayload.feedback = utilNjEnv.render 'feedback-iframe.html', {
       iframeContent: iframeContent
       serverUrl: serverAddress
+      iframeId: Util.randomId('acos-feedback-')
     }
     cb()
   
@@ -320,6 +321,14 @@ Util.getFinalComment = (score, payload) ->
     html += payload[limits[feedbackIdx][1]]
   
   html
+
+
+Util.randomId = (prefix = 'id', length = 15) ->
+  chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+  n = chars.length
+  # pick random characters (as many as the value of length)
+  res = (chars.charAt(Math.floor(Math.random() * n)) for i in [1..length])
+  prefix + res.join('')
 
 
 Util.convertRelativeUrlsInHtmlStrings = (obj, serverAddress) ->
