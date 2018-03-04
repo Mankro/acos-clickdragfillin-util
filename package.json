@@ -1,6 +1,6 @@
 {
   "name": "acos-clickdragfillin-util",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "nunjucks": "^3.0.1",
@@ -18,5 +18,6 @@
     "url": "git@github.com:acos-server/acos-clickdragfillin-util.git"
   },
   "author": "Markku Riekkinen",
+  "contributors": "Jan-Mikael Rybicki",
   "license": "MIT"
 }

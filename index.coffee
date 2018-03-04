@@ -58,7 +58,9 @@ Util.registerContentPackage = (contentPackagePrototype, contentPackageDir) ->
           'order': order++
         }
         
-        contentPackagePrototype.meta.teaserContent.push(exerciseName)
+        # Adds all the exercises into teaser contents.
+        # If disabled, teaser contents must be added manually in the exercise package.
+        # contentPackagePrototype.meta.teaserContent.push(exerciseName)
   )
 
 
