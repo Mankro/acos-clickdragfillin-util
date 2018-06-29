@@ -26,6 +26,7 @@ class ExerciseNode
 # A plain text node. This node never has children.
 class ExerciseTextNode extends ExerciseNode
   constructor: (text) ->
+    super()
     @text = text
   
   html: ->
@@ -38,6 +39,7 @@ class ExerciseTextNode extends ExerciseNode
 # A generic HTML node, which may have children
 class ExerciseHtmlNode extends ExerciseNode
   constructor: (name, attributes) ->
+    super()
     @nodeName = name
     @attributes = attributes || {}
     
@@ -69,9 +71,10 @@ class ExerciseHtmlNode extends ExerciseNode
 
 
 class ExerciseClickableNode extends ExerciseNode
-  constructor: (@text, @id) ->
-    @text = ' ' if !@text? || @text.length < 1
-    @id = @text if !@id? || @id.length < 1  # Use text as id if no id is given
+  constructor: (text, id) ->
+    super()
+    @text = if not text? || text.length < 1 then ' ' else text
+    @id = if not id? || id.length < 1 then @text else id # Use text as id if no id is given
     
   html: ->
     "<span data-label='#{@id}' class='clickable'>#{@text}</span>"
@@ -82,8 +85,10 @@ class ExerciseClickableNode extends ExerciseNode
     
 
 class ExerciseFillinNode extends ExerciseNode
-  constructor: (@text, @id) ->
-    @text = '' if !@text?
+  constructor: (text, id) ->
+    super()
+    @text = text ? ''
+    @id = id
     
   html: ->
     "<input data-label='#{id}' type='text' />"
@@ -93,16 +98,20 @@ class ExerciseFillinNode extends ExerciseNode
     
 
 class ExerciseDraggableNode extends ExerciseNode
-  constructor: (@text, @id) ->
-    @text = '&empty;' if !@text? || @text.length < 1 # symbol for empty set
+  constructor: (text, id) ->
+    super()
+    @text = if not text? || text.length < 1 then '&empty;' else text # use the symbol for empty set for empty text
+    @id = id
     
   html: ->
     "<span data-label=\"#{@id}\" class=\"draggable\">#{@text}</span>"
 
 class ExerciseDroppableNode extends ExerciseNode
-  constructor: (@text, @id) ->
-    @text = @text.trim()
+  constructor: (text, id) ->
+    super()
+    @text = text.trim()
     @text = '&nbsp;&nbsp;&nbsp;&nbsp;' if @text.length < 1
+    @id = id
 
   html: ->
     "<span data-label=\"#{@id}\" class=\"droppable\"><span>#{@text}</span></span>"
