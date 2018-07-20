@@ -65,7 +65,7 @@ ExerciseHtmlNode = class ExerciseHtmlNode extends ExerciseNode {
   // options:
   // {omitRoot: true} renders only the children without this tag itself
   html(options = {}) {
-    var attributesHtml, html;
+    var attributesHtml, content;
     // Render attributes into a string, e.g. " class='warning'"
     attributesHtml = this.attributes ? ' ' + (Object.keys(this.attributes).map((attribute) => {
       // The only characters that must be escaped within attributes are amp and quot
@@ -76,14 +76,22 @@ ExerciseHtmlNode = class ExerciseHtmlNode extends ExerciseNode {
         return child.html();
       }).join('');
     } else {
-      if (this.children) {
-        return html = `\n<${this.nodeName}` + attributesHtml + ">" + this.children.map(function(child) {
+      if (this.isVoidElement()) {
+        return `<${this.nodeName}` + attributesHtml + "/>";
+      } else if (this.children) {
+        content = this.children.map(function(child) {
           return child.html();
-        }).join('') + `</${this.nodeName}>`;
+        }).join('');
       } else {
-        return html = `<${this.nodeName}` + attributesHtml + " />";
+        content = '';
       }
+      return `\n<${this.nodeName}` + attributesHtml + '>' + content + `</${this.nodeName}>`;
     }
+  }
+
+  isVoidElement() {
+    var ref;
+    return (ref = this.nodeName) === 'area' || ref === 'base' || ref === 'br' || ref === 'col' || ref === 'embed' || ref === 'hr' || ref === 'img' || ref === 'input' || ref === 'link' || ref === 'meta' || ref === 'param' || ref === 'source' || ref === 'track' || ref === 'wbr';
   }
 
 };

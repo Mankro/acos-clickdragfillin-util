@@ -58,16 +58,19 @@ class ExerciseHtmlNode extends ExerciseNode
     if options['omitRoot'] || !@nodeName
       @children.map((child) -> child.html()).join('')
     else
-      if @children
-        html = "\n<#{@nodeName}" +
-              attributesHtml +
-              ">" +
-              @children.map((child) -> child.html()).join('') +
-              "</#{@nodeName}>"
+      if @isVoidElement()
+        return "<#{@nodeName}" + attributesHtml + "/>"
+      else if @children
+        content = @children.map((child) -> child.html()).join('')
       else
-        html = "<#{@nodeName}"+ 
-              attributesHtml +
-              " />"
+        content = ''
+      return "\n<#{@nodeName}" + attributesHtml + '>' +
+          content +
+          "</#{@nodeName}>"
+
+  isVoidElement: ->
+    @nodeName in ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+                  'link', 'meta', 'param', 'source', 'track', 'wbr']
 
 
 class ExerciseClickableNode extends ExerciseNode
