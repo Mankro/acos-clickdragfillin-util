@@ -1,6 +1,6 @@
 {
   "name": "acos-clickdragfillin-util",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "dependencies": {
     "cheerio": "^1.0.0-rc.2",
     "nunjucks": "^3.0.1",
